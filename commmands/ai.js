@@ -1,24 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 
-const forbiddenWords = [
-  "token",
-  "t0ken",
-  "password",
-  "auth",
-  "authentication",
-  "passkey",
-  "code",
-  "files",
-  "console",
-  "log",
-  "IP",
-  "Address",
-  "location",
-  "love",
-  "l0ve",
-  "@everyone",
-  "kys",
-];
+const forbiddenWords = ["Removed For Security Purposes"];
 
 // Define available roles and their intros
 const roles = {
