@@ -4,10 +4,12 @@ const forbiddenWords = ["Removed For Security Purposes"];
 
 // Define available roles and their intros
 const roles = {
-  assistant: "You are an assistant, act like one, and speak like one.",
+  assistant:
+    "You are an assistant, act like one, and speak like one.Also remember, You are present in a virtual democracy on Discord called 'SimDemocracy'.",
   law_consultant:
-    "You are a law consultant, provide professional legal advice.",
-  // Add more roles here as needed
+    "You are a law consultant, provide professional legal advice always remind the user you dont know much about SimDemocracy law. Also remember, You are present in a virtual democracy on Discord called 'SimDemocracy'.",
+  ai_poli:
+    "You are now 'AI Politician'. You are present in a virtual democracy on Discord called 'SimDemocracy'.",
 };
 
 // Memory to store the last 5 messages (conversation history)
@@ -52,72 +54,56 @@ module.exports = {
 
     // Get the intro for the selected role, or default to a generic message if not found
     const roleIntro =
-      roles[role] || "You are a professional AI, give a helpful response.";
+      roles[role] ||
+      "You are a professional AI, give a helpful response. Keep response at or below 100 words. Also remember, You are present in a virtual democracy on Discord called 'SimDemocracy'.";
 
-    // Add the user prompt to the conversation history
-    const userMessage = { role: "user", content: prompt };
-    messageHistory.push(userMessage);
+    // Modify the prompt by adding the role's intro directly to it
+    const modifiedPrompt = `The person named ${interaction.user.username} asked: ${prompt}. Make response at or below 100 words. Keep in mind, ${roleIntro}`;
 
-    // Ensure we keep only the last 5 messages in memory
+    // Update the message history with the new prompt
+    messageHistory.push({
+      role: "user",
+      content: modifiedPrompt,
+    });
+
+    // Ensure message history contains no more than 5 messages
     if (messageHistory.length > 5) {
-      messageHistory.shift(); // Remove the oldest message if there are more than 5
+      messageHistory.shift(); // Remove the oldest message if history exceeds 5
     }
 
     // Prepare the conversation history for the API request
-    const conversationHistory = messageHistory.map((message) => ({
-      role: message.role,
-      content: message.content,
-    }));
+    const conversationHistory = [
+      {
+        role: "system",
+        content: roleIntro,
+      },
+      ...messageHistory, 
+    ];
 
-    // Add the role intro at the start of the conversation history
-    conversationHistory.unshift({
-      role: "system",
-      content: roleIntro,
-    });
 
-    // Only make the API request if the conversation history has any messages
     if (conversationHistory.length > 1) {
-      // At least 1 message (system intro)
-      const apiUrl = "http://127.0.0.1:11434/api/chat"; // Replace with your actual API URL
+      const apiUrl = "http://IP:11434/api/chat"; // IP Removed
 
       try {
         const response = await fetch(apiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "your-model-name", // Replace with the appropriate model if needed
+            model: "phi4",
             messages: conversationHistory,
-            stream: false, // Adding stream: false back to the body
+            stream: false, 
           }),
         });
 
-        // Log the raw response to debug
+
         const rawResponse = await response.text();
-        console.log("Raw API Response:", rawResponse);
+        const data = JSON.parse(rawResponse); 
 
-        // Try to parse the response as JSON
-        const data = JSON.parse(rawResponse); // Parse response after logging
 
-        // Ensure the response contains the expected content
         const assistantResponse =
           data?.message?.content || "No response from API.";
 
         const finalReply = `${assistantResponse}\n\n-# AI can make mistakes. Treat everything it says as fiction. Please note, this AI is from an external source.`;
-
-        // Add assistant's response to memory for future context (ensure the role is "assistant")
-        const assistantMessage = {
-          role: "assistant",
-          content: assistantResponse,
-        };
-        messageHistory.push(assistantMessage);
-
-        // If the response is empty, return an error message
-        if (!finalReply) {
-          return interaction.editReply({
-            content:
-              "There was an issue generating a response. Please try again later.",
-          });
-        }
 
         return interaction.editReply({ content: finalReply });
       } catch (error) {
