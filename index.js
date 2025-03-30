@@ -1,7 +1,6 @@
 require("dotenv").config();
 const fs = require("node:fs");
 const path = require("node:path");
-const { spawn } = require("child_process"); // Added to spawn ChromaDB server
 const { DISCORD_TOKEN: token } = process.env;
 // Require the necessary discord.js classes
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
@@ -16,26 +15,6 @@ const client = new Client({
     GatewayIntentBits.GuildMessageReactions,
   ],
 });
-
-// Start the ChromaDB server
-const startChromaDB = () => {
-  const chromaServer = spawn("chroma", ["server"]); // Ensure 'chroma' command is available
-
-  chromaServer.stdout.on("data", (data) => {
-    console.log(`ChromaDB Server: ${data}`);
-  });
-
-  chromaServer.stderr.on("data", (data) => {
-    console.error(`Error: ${data}`);
-  });
-
-  chromaServer.on("close", (code) => {
-    console.log(`ChromaDB Server exited with code ${code}`);
-  });
-};
-
-// Start ChromaDB server before Discord bot login
-startChromaDB();
 
 // Load the events on startup.
 const eventsPath = path.join(__dirname, "events");
